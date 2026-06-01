@@ -13,6 +13,18 @@ enum class TokenType
     KW_INT,   // integer keyword
     KW_FLOAT, // float keyword
     KW_STR,   // string keyword
+
+    /**
+     * Operators
+     */
+    PLUS,   // +
+    MINUS,  // -
+    STAR,   // *
+    SLASH,  // /
+    ASSIGN, // =
+    EE,     // ==
+    NE,     // !=
+
     /**
      * Tokens
      */
@@ -27,7 +39,6 @@ enum class TokenType
     CLOSE_BRACE, // }
     RETURN,      // return
     VAR,         // variable
-    OPERATOR,    // operator
     SEMICOLON,   // ;
     TK_EOF,      // end of file
     ERROR,       // error
@@ -59,16 +70,14 @@ private:
     Token nextToken();
     Token makeToken(TokenType type);
     Token errToken(std::string message);
-    Token scanString();
+    // Token scanString();
     Token scanNum();
+    Token scanIdentifierOrKeyword();
+    Token scanString();
+    void skip();
 
     // Utils
     void skipWhitespace();
-
-    Token scanIdentifierOrKeyword();
-    // Token scanString();
-    Token scanNumber();
-    void skip();
 
     // State
     std::string src;

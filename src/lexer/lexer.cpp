@@ -43,6 +43,19 @@ Token Lexer::nextToken()
     if (std::isdigit(c))
         return scanNum();
 
+    // scan equality operators
+    if (c == '=' && peek() == '=')
+    {
+        advance();
+        return makeToken(TokenType::EE);
+    }
+
+    if (c == '!' && peek() == '=')
+    {
+        advance();
+        return makeToken(TokenType::NE);
+    }
+
     // braces
     switch (c)
     {
@@ -56,6 +69,12 @@ Token Lexer::nextToken()
             return makeToken(TokenType::CLOSE_PAREN);
         case ';':
             return makeToken(TokenType::SEMICOLON);
+        case '=':
+            return makeToken(TokenType::ASSIGN);
+        case '+':
+            return makeToken(TokenType::PLUS);
+        case '-':
+            return makeToken(TokenType::MINUS);
 
         default:
             return errToken("Not a viable token.");
@@ -115,7 +134,7 @@ char Lexer::advance()
 
 Token Lexer::scanIdentifierOrKeyword()
 {
-    while (!isEnd() && std::isalnum(peek()))
+    while (!isEnd() && std::isalnum(peek()) || peek() == '_')
     {
         advance();
     }
@@ -150,7 +169,7 @@ Token Lexer::scanNum()
 
     if (peek() == '.' && std::isdigit(peekNext()))
     {
-        advance(); // use .
+        advance();
 
         while (!isEnd() && std::isdigit(peek()))
         {

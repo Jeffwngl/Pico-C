@@ -1,3 +1,11 @@
+// hi
+/**
+ * This is a block of text
+ */
 int main() {
-    return 2;
+    int a_number = 4 - 2;
+    if (a_number == 3) {
+        return 0;
+    }
+    return a;
 }
