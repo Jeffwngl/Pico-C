@@ -7,5 +7,8 @@ int main() {
     if (a_number == 3) {
         return 0;
     }
-    return a;
+    if (a_number >= 5) {
+        printf("hello");
+    }
+    return a_number;
 }

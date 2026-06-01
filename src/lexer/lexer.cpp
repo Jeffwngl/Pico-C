@@ -3,7 +3,8 @@
 const std::unordered_map<std::string, TokenType> Lexer::keywords = {
     {"int", TokenType::KW_INT},    {"float", TokenType::KW_FLOAT},
     {"string", TokenType::KW_STR}, {"return", TokenType::RETURN},
-    {";", TokenType::SEMICOLON},
+    {";", TokenType::SEMICOLON},   {"main", TokenType::MAIN},
+    {"const", TokenType::CONST},   {"printf", TokenType::PRINTF},
 };
 
 Lexer::Lexer(const std::string& src, const std::string& filename)
@@ -43,18 +44,9 @@ Token Lexer::nextToken()
     if (std::isdigit(c))
         return scanNum();
 
-    // scan equality operators
-    if (c == '=' && peek() == '=')
-    {
-        advance();
-        return makeToken(TokenType::EE);
-    }
-
-    if (c == '!' && peek() == '=')
-    {
-        advance();
-        return makeToken(TokenType::NE);
-    }
+    // scan strings
+    if (c == '"')
+        return scanString();
 
     // braces
     switch (c)
@@ -70,10 +62,24 @@ Token Lexer::nextToken()
         case ';':
             return makeToken(TokenType::SEMICOLON);
         case '=':
-            return makeToken(TokenType::ASSIGN);
+            return makeToken(match('=') ? TokenType::EE : TokenType::ASSIGN);
+        case '!':
+            return makeToken(match('=') ? TokenType::NE : TokenType::BANG);
+        case '<':
+            return makeToken(match('=') ? TokenType::LEQ : TokenType::LESS);
+        case '>':
+            return makeToken(match('=') ? TokenType::GEQ : TokenType::GREATER);
         case '+':
+            if (match('+'))
+                return makeToken(TokenType::PLUS_PLUS);
+            if (match('='))
+                return makeToken(TokenType::PLUS_EQUAL);
             return makeToken(TokenType::PLUS);
         case '-':
+            if (match('-'))
+                return makeToken(TokenType::MINUS_MINUS);
+            if (match('='))
+                return makeToken(TokenType::MINUS_EQUAL);
             return makeToken(TokenType::MINUS);
 
         default:
@@ -89,6 +95,16 @@ Token Lexer::makeToken(TokenType type)
 Token Lexer::errToken(std::string message)
 {
     return Token{TokenType::ERROR, message, line, col};
+};
+
+bool Lexer::match(char expected)
+{
+    if (isEnd())
+        return false;
+    if (src[current] == expected)
+        return true;
+
+    return false;
 };
 
 char Lexer::peek() const
@@ -117,6 +133,7 @@ bool Lexer::isEnd() const
 
 char Lexer::advance()
 {
+    // post increment, c is at current - 1
     char c = src[current++];
 
     if (c == '\n')
@@ -157,7 +174,7 @@ Token Lexer::scanString()
     }
 
     advance();
-    return makeToken(TokenType::STRING);
+    return makeToken(TokenType::VAL_STRING);
 };
 
 Token Lexer::scanNum()
@@ -175,10 +192,10 @@ Token Lexer::scanNum()
         {
             advance();
         }
-        return makeToken(TokenType::FLOAT);
+        return makeToken(TokenType::VAL_FLOAT);
     }
 
-    return makeToken(TokenType::INTEGER);
+    return makeToken(TokenType::VAL_INT);
 };
 
 void Lexer::skipWhitespace()

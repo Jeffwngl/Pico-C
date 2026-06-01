@@ -9,6 +9,7 @@ enum class TokenType
 {
     /**
      * Keywords
+     * Keyword type e.g. string or float
      */
     KW_INT,   // integer keyword
     KW_FLOAT, // float keyword
@@ -17,21 +18,26 @@ enum class TokenType
     /**
      * Operators
      */
-    PLUS,   // +
-    MINUS,  // -
-    STAR,   // *
-    SLASH,  // /
-    ASSIGN, // =
-    EE,     // ==
-    NE,     // !=
+    PLUS,        // +
+    MINUS,       // -
+    STAR,        // *
+    SLASH,       // /
+    ASSIGN,      // =
+    GREATER,     // >
+    LESS,        // <
+    BANG,        // !
+    EE,          // ==
+    NE,          // !=
+    GEQ,         // >=
+    LEQ,         // <=
+    PLUS_EQUAL,  // +=
+    MINUS_EQUAL, // -=
+    PLUS_PLUS,   // ++
+    MINUS_MINUS, // --
 
     /**
-     * Tokens
+     * Other
      */
-    KEYWORD,     // keyword value
-    INTEGER,     // integer value
-    FLOAT,       // float value
-    STRING,      // string value
     IDENTIFIER,  // variable name
     OPEN_PAREN,  // \(
     CLOSE_PAREN, // \)
@@ -42,6 +48,17 @@ enum class TokenType
     SEMICOLON,   // ;
     TK_EOF,      // end of file
     ERROR,       // error
+    MAIN,        // main
+    CONST,       // const
+    PRINTF,      // printf
+
+    /**
+     * Value
+     * Actual value of the type, e.g. "hello" or 5.0
+     */
+    VAL_FLOAT,
+    VAL_STRING,
+    VAL_INT,
 };
 
 struct Token
@@ -70,10 +87,9 @@ private:
     Token nextToken();
     Token makeToken(TokenType type);
     Token errToken(std::string message);
-    // Token scanString();
+    Token scanString();
     Token scanNum();
     Token scanIdentifierOrKeyword();
-    Token scanString();
     void skip();
 
     // Utils
@@ -87,7 +103,7 @@ private:
     int line;
     int col;
 
-    // kw table
+    // Keyword table
     static const std::unordered_map<std::string, TokenType> keywords;
 };
 
