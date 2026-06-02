@@ -10,6 +10,7 @@ set(source_dir "${PROJECT_SOURCE_DIR}/src/")
 add_executable(${CMAKE_PROJECT_NAME} 
     src/main.cpp
     src/lexer/lexer.cpp
+    src/parser/parser.cpp
 )
 
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC

@@ -8,7 +8,7 @@ const std::unordered_map<std::string, TokenType> Lexer::keywords = {
 };
 
 Lexer::Lexer(const std::string& src, const std::string& filename)
-    : src{src}, filename{filename}, start{0}, current{0}, line{1}, col{1} {};
+    : src(src), filename(filename), start(0), current(0), line(1), col(1) {};
 
 std::vector<Token> Lexer::tokenize()
 {
@@ -48,7 +48,7 @@ Token Lexer::nextToken()
     if (c == '"')
         return scanString();
 
-    // braces
+    // braces and other
     switch (c)
     {
         case '(':
@@ -62,13 +62,33 @@ Token Lexer::nextToken()
         case ';':
             return makeToken(TokenType::SEMICOLON);
         case '=':
-            return makeToken(match('=') ? TokenType::EE : TokenType::ASSIGN);
+            if (match('='))
+            {
+                advance();
+                makeToken(TokenType::EE);
+            }
+            return makeToken(TokenType::ASSIGN);
         case '!':
-            return makeToken(match('=') ? TokenType::NE : TokenType::BANG);
+            if (match('='))
+            {
+                advance();
+                makeToken(TokenType::NE);
+            }
+            return makeToken(TokenType::BANG);
         case '<':
-            return makeToken(match('=') ? TokenType::LEQ : TokenType::LESS);
+            if (match('='))
+            {
+                advance();
+                makeToken(TokenType::LEQ);
+            }
+            return makeToken(TokenType::LESS);
         case '>':
-            return makeToken(match('=') ? TokenType::GEQ : TokenType::GREATER);
+            if (match('='))
+            {
+                advance();
+                makeToken(TokenType::GEQ);
+            }
+            return makeToken(TokenType::GREATER);
         case '+':
             if (match('+'))
                 return makeToken(TokenType::PLUS_PLUS);
