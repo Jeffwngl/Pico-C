@@ -49,11 +49,14 @@ private:
     bool check(TokenType type) const;
     bool match(TokenType type);
     bool match(std::initializer_list<TokenType> types);
+    bool isType(TokenType type) const;
     const Token& peek() const;
     const Token& prev() const;
 
     Token advance();
     Token consume(TokenType type, const std::string& message);
+
+    Param parseParam();
 };
 
 #endif

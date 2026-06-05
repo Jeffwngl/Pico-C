@@ -161,6 +161,12 @@ bool Parser::match(std::initializer_list<TokenType> types)
     return false;
 };
 
+bool Parser::isType(TokenType type) const
+{
+    return type == TokenType::KW_INT || type == TokenType::KW_FLOAT ||
+           type == TokenType::KW_STR || type == TokenType::KW_CHAR;
+};
+
 Token Parser::consume(TokenType type, const std::string& message)
 {
     if (check(type))
@@ -401,7 +407,17 @@ StmtPtr Parser::parseFunctionDeclaration(Token type, Token name)
 {
     consume(TokenType::OPEN_PAREN, "Expected '(' after function name.");
 
-    std::vector<Token> params;
+    std::vector<Param> params;
+
+    if (!check(TokenType::CLOSE_PAREN))
+    {
+        params.push_back(parseParam());
+
+        while (match(TokenType::COMMA))
+        {
+            params.push_back(parseParam());
+        }
+    }
 
     // TODO: add param list
     // For now only support empty parameter list
@@ -414,6 +430,23 @@ StmtPtr Parser::parseFunctionDeclaration(Token type, Token name)
 
     return std::make_unique<FunctionStmt>(std::move(type), std::move(name),
                                           std::move(params), std::move(body));
+};
+
+// handles function parameters e.g. int a, int b
+Param Parser::parseParam()
+{
+    if (!isType(peek().type))
+    {
+        throw std::runtime_error("Expected parameter type at line " +
+                                 std::to_string(peek().line) + ", col " +
+                                 std::to_string(peek().col));
+    }
+
+    Token type = advance();
+
+    Token name = consume(TokenType::IDENTIFIER, "Expected parameter name.");
+
+    return Param(std::move(type), std::move(name));
 };
 
 // handles high level statements e.g. while(...), if(...)
