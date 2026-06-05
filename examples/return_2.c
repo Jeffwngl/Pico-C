@@ -1,13 +1,10 @@
-// hi
-/**
- * This is a block of text
- */
+// This is a comment.
 int main() {
     int a_number = 4 - 2;
     if (a_number == 3) {
         return 0;
     }
-    if (a_number >= 5) {
+    else {
         printf("hello");
     }
     return a_number;
