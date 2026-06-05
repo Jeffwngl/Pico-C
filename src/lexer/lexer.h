@@ -60,9 +60,8 @@ enum class TokenType
     SEMICOLON,   // ;
     TK_EOF,      // end of file
     ERROR,       // error
-    // MAIN,        // main
-    CONST, // const
-    COMMA, // ,
+    CONST,       // const
+    COMMA,       // ,
 
     /**
      * Statements
