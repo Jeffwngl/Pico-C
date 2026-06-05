@@ -44,6 +44,8 @@ enum class TokenType
     MINUS_EQUAL, // -=
     PLUS_PLUS,   // ++
     MINUS_MINUS, // --
+    STAR_EQUAL,  // *=
+    SLASH_EQUAL, // /=
 
     /**
      * Other
@@ -98,6 +100,7 @@ private:
     Token makeToken(TokenType type);
     Token errToken(std::string message);
     Token scanString();
+    Token scanChar();
     Token scanNum();
     Token scanIdentifierOrKeyword();
     void skip();

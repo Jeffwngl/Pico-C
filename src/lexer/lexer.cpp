@@ -8,7 +8,6 @@ const std::unordered_map<std::string, TokenType> Lexer::keywords = {
     {"while", TokenType::WHILE},   {"if", TokenType::IF},
     {"else", TokenType::ELSE}};
 
-// TODO: make token identifier for if, for, while and else
 Lexer::Lexer(const std::string& src, const std::string& filename)
     : src(src), filename(filename), start(0), curr(0), line(1), col(1) {};
 
@@ -49,6 +48,12 @@ Token Lexer::nextToken()
     // scan strings
     if (c == '"')
         return scanString();
+
+    // scan chars
+    if (c == '\'')
+    {
+        return scanChar();
+    }
 
     // braces and other
     switch (c)
@@ -93,17 +98,43 @@ Token Lexer::nextToken()
                 return makeToken(TokenType::GEQ);
             }
             return makeToken(TokenType::GREATER);
+        case '*':
+            if (match('='))
+            {
+                advance();
+                return makeToken(TokenType::STAR_EQUAL);
+            }
+            return makeToken(TokenType::STAR);
+        case '/':
+            if (match('='))
+            {
+                advance();
+                return makeToken(TokenType::SLASH_EQUAL);
+            }
+            return makeToken(TokenType::SLASH);
         case '+':
             if (match('+'))
+            {
+                advance();
                 return makeToken(TokenType::PLUS_PLUS);
+            }
             if (match('='))
+            {
+                advance();
                 return makeToken(TokenType::PLUS_EQUAL);
+            }
             return makeToken(TokenType::PLUS);
         case '-':
             if (match('-'))
+            {
+                advance();
                 return makeToken(TokenType::MINUS_MINUS);
+            }
             if (match('='))
+            {
+                advance();
                 return makeToken(TokenType::MINUS_EQUAL);
+            }
             return makeToken(TokenType::MINUS);
 
         default:
@@ -199,6 +230,18 @@ Token Lexer::scanString()
 
     advance();
     return makeToken(TokenType::VAL_STRING);
+};
+
+// TODO: change this to smthing better
+Token Lexer::scanChar()
+{
+    while (!isEnd() && peek() != '\'')
+    {
+        advance();
+    }
+
+    advance();
+    return makeToken(TokenType::VAL_CHAR);
 };
 
 Token Lexer::scanNum()
