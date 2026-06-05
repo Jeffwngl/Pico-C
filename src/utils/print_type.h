@@ -14,6 +14,8 @@ std::string tokenTypeToString(TokenType type)
             return "KW_FLOAT";
         case TokenType::KW_STR:
             return "KW_STR";
+        case TokenType::KW_CHAR:
+            return "KW_CHAR";
 
         case TokenType::PLUS:
             return "PLUS";
@@ -47,6 +49,8 @@ std::string tokenTypeToString(TokenType type)
             return "PLUS_PLUS";
         case TokenType::MINUS_MINUS:
             return "MINUS_MINUS";
+        case TokenType::COMMA:
+            return "COMMA";
 
         case TokenType::FOR:
             return "FOR";
@@ -88,6 +92,8 @@ std::string tokenTypeToString(TokenType type)
             return "VAL_STRING";
         case TokenType::VAL_INT:
             return "VAL_INT";
+        case TokenType::VAL_CHAR:
+            return "VAL_CHAR";
 
         default:
             return "UNKNOWN_TOKEN";
