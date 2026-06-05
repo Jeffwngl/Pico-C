@@ -210,25 +210,34 @@ ExprPtr Parser::parsePrimary()
 // handles high level type declarations e.g. int, string, char
 StmtPtr Parser::parseDeclaration()
 {
-    if (match({TokenType::KW_INT, TokenType::KW_FLOAT, TokenType::KW_STR}))
-        return parseVarDeclaration();
+    if (match({TokenType::KW_INT, TokenType::KW_FLOAT, TokenType::KW_STR,
+               TokenType::KW_CHAR}))
+    {
+        Token type = prev();
+
+        Token name =
+            consume(TokenType::IDENTIFIER, "Expected name after type.");
+
+        if (check(TokenType::OPEN_PAREN))
+        {
+            return parseFunctionDeclaration(std::move(type), std::move(name));
+        }
+
+        return parseVarDeclaration(std::move(type), std::move(name));
+    }
 
     return parseStatement();
 };
 
 // handles variable declarations e.g. int x = 5 + 3;
-StmtPtr Parser::parseVarDeclaration()
+StmtPtr Parser::parseVarDeclaration(Token type, Token name)
 {
-    Token type = prev();
-
-    // std::cout << type.val << std::endl;
-
-    Token name = consume(TokenType::IDENTIFIER, "Expected variable name.");
-
     ExprPtr value = nullptr;
 
     if (match(TokenType::ASSIGN))
+    {
         value = parseExpression();
+    }
 
     consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
 
