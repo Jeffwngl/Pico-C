@@ -19,6 +19,7 @@ private:
     // parse grammar rule expressions
 
     ExprPtr parseExpression();
+    ExprPtr parseAssignment();
     ExprPtr parseEquality();
     ExprPtr parseComparison();
     ExprPtr parseFactor();  // * / etc.
@@ -27,6 +28,7 @@ private:
     ExprPtr parsePrimary(); // "hello", true, 67, (), {} etc.
     ExprPtr parseTerm();    // + - etc.
     ExprPtr parseCall();    // printf(...) etc.
+    ExprPtr parsePostfix(); // x++ etc.
 
     // parse grammar rule statements
 

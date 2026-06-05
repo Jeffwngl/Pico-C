@@ -1,12 +1,92 @@
+/**
+ * The parser uses recursive descent parsing
+ */
+
+// Statement Grammar //
+/*
+program     → declaration* EOF ;
+
+declaration → type IDENTIFIER functionDeclaration
+            | type IDENTIFIER varDeclaration
+            | statement ;
+
+type        → "int"
+            | "float"
+            | "string"
+            | "char" ;
+
+functionDeclarationRest
+            → "(" ")" "{" block ;
+
+varDeclarationRest
+            → ( "=" expression )? ";" ;
+
+statement   → ifStatement
+            | whileStatement
+            | forStatement
+            | block
+            | returnStatement
+            | expressionStatement ;
+
+block       → declaration* "}" ;
+
+ifStatement → "if" "(" expression ")" statement
+              ( "else" statement )? ;
+
+whileStatement
+            → "while" "(" expression ")" statement ;
+
+forStatement
+            → "for" "(" forInitializer? ";" forCondition? forIncrement? ")"
+statement ;
+
+forInitializer
+            → type declaration ;
+
+forCondition
+            → IDENTIFIER expression ;
+
+forIncrement
+            → IDENTIFIER expression ;
+
+returnStatement
+            → "return" expression? ";" ;
+
+expressionStatement
+            → expression ";" ;
+*/
+
+// Expression Grammar //
+/*
+expression  → equality ;
+
+equality    → comparison ( ( "==" | "!=" ) comparison )* ;
+
+comparison  → term ( ( "<" | ">" | "<=" | ">=" ) term )* ;
+
+term        → factor ( ( "+" | "-" ) factor )* ;
+
+factor      → unary ( ( "*" | "/" ) unary )* ;
+
+unary       → call ;
+
+call        → primary ( "(" args? ")" )* ;
+
+args        → expression ( "," expression )* ;
+
+primary     → INT_LITERAL
+            | FLOAT_LITERAL
+            | STRING_LITERAL
+            | CHAR_LITERAL
+            | IDENTIFIER
+            | "(" expression ")" ;
+*/
+
 #include "parser.h"
 
 Parser::Parser(std::vector<Token> tokens) : tokens(tokens), curr(0)
 {
 }
-
-/**
- * The parser uses recursive descent parsing
- */
 
 // Starts the program, starts with the highest level
 std::unique_ptr<Program> Parser::parse()
@@ -100,8 +180,26 @@ Token Parser::consume(TokenType type, const std::string& message)
 // handles base expressions e.g. 5 + 2 * 3 -> (2 * 3) + 5
 ExprPtr Parser::parseExpression()
 {
-    return parseEquality();
-}
+    return parseAssignment();
+};
+
+// handles non declaration assignment e.g. a = 0, a += 2
+ExprPtr Parser::parseAssignment()
+{
+    ExprPtr expr = parseEquality();
+
+    if (match({TokenType::ASSIGN, TokenType::PLUS_EQUAL, TokenType::MINUS_EQUAL,
+               TokenType::STAR_EQUAL, TokenType::SLASH_EQUAL}))
+    {
+        Token op = prev();
+        ExprPtr value = parseAssignment();
+
+        return std::make_unique<BinaryExpr>(std::move(op), std::move(expr),
+                                            std::move(value));
+    }
+
+    return expr;
+};
 
 // handles actual equation e.g. int x = 5 <- curr + 2 * 3
 ExprPtr Parser::parseEquality()
@@ -174,36 +272,36 @@ ExprPtr Parser::parseFactor()
     return expr;
 };
 
-// handles unary e.g. x++, !ok, -5
+// handles unary and calls e.g. x++, !ok, -5, printf("hello")
 ExprPtr Parser::parseUnary()
 {
-    return parseCall();
-    // ExprPtr expr = parsePrimary();
-    // return expr;
-};
-
-// handles primaries e.g. 5, 3.14, 67, "six_seven", either int, float or string
-ExprPtr Parser::parsePrimary()
-{
-    if (match({TokenType::VAL_INT, TokenType::VAL_FLOAT, TokenType::VAL_STRING,
-               TokenType::VAL_CHAR}))
-        return std::make_unique<PrimaryExpr>(prev());
-
-    if (match(TokenType::IDENTIFIER))
-        return std::make_unique<IdentifierExpr>(prev());
-
-    if (match(TokenType::OPEN_PAREN))
+    if (match({TokenType::BANG, TokenType::MINUS, TokenType::PLUS_PLUS,
+               TokenType::MINUS_MINUS}))
     {
-        ExprPtr expr = parseExpression();
-        consume(TokenType::CLOSE_PAREN, "Expected ')' after expression.");
-        return expr;
+        Token op = prev();
+        ExprPtr right = parseUnary();
+
+        return std::make_unique<UnaryExpr>(std::move(op), std::move(right));
     }
 
-    throw std::runtime_error("Expected expression at line " +
-                             std::to_string(peek().line) + ", col " +
-                             std::to_string(peek().col));
+    return parsePostfix();
 };
 
+ExprPtr Parser::parsePostfix()
+{
+    ExprPtr expr = parseCall();
+
+    while (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS}))
+    {
+        Token op = prev();
+
+        expr = std::make_unique<PostFixExpr>(std::move(op), std::move(expr));
+    }
+
+    return expr;
+};
+
+// handles function calls e.g. printf("hello")
 ExprPtr Parser::parseCall()
 {
     ExprPtr expr = parsePrimary();
@@ -233,6 +331,28 @@ ExprPtr Parser::parseCall()
 
     return expr;
 }
+
+// handles primaries e.g. 5, 3.14, 67, "six_seven", either int, float or string
+ExprPtr Parser::parsePrimary()
+{
+    if (match({TokenType::VAL_INT, TokenType::VAL_FLOAT, TokenType::VAL_STRING,
+               TokenType::VAL_CHAR}))
+        return std::make_unique<PrimaryExpr>(prev());
+
+    if (match(TokenType::IDENTIFIER))
+        return std::make_unique<IdentifierExpr>(prev());
+
+    if (match(TokenType::OPEN_PAREN))
+    {
+        ExprPtr expr = parseExpression();
+        consume(TokenType::CLOSE_PAREN, "Expected ')' after expression.");
+        return expr;
+    }
+
+    throw std::runtime_error("Expected expression at line " +
+                             std::to_string(peek().line) + ", col " +
+                             std::to_string(peek().col));
+};
 
 /**
  * Parse Statements
@@ -322,7 +442,7 @@ StmtPtr Parser::parseExpressionStatement()
 {
     ExprPtr expr = parseExpression();
 
-    consume(TokenType::SEMICOLON, "Expected ';' after expression.");
+    consume(TokenType::SEMICOLON, "Expected ';' after expression");
 
     return std::make_unique<ExprStmt>(std::move(expr));
 }
@@ -330,7 +450,6 @@ StmtPtr Parser::parseExpressionStatement()
 // handles if statement
 StmtPtr Parser::parseIfStatement()
 {
-    // TODO: rewrite the the line below to be reusable
     consume(TokenType::OPEN_PAREN, "Expected '(' after 'if'.");
 
     ExprPtr condition = parseExpression();
@@ -372,22 +491,37 @@ StmtPtr Parser::parseForStatement()
 
     StmtPtr initializer = nullptr;
 
-    if (match({TokenType::KW_CHAR, TokenType::KW_INT, TokenType::KW_FLOAT}))
-        initializer = parseDeclaration();
+    if (match(TokenType::SEMICOLON))
+    {
+        initializer = nullptr;
+    }
+    else if (match(
+                 {TokenType::KW_CHAR, TokenType::KW_INT, TokenType::KW_FLOAT}))
+    {
 
-    consume(TokenType::SEMICOLON, "Expected ';' after initializer.");
+        Token type = prev();
+        Token name = consume(TokenType::IDENTIFIER,
+                             "Expected variable name in for initializer");
+        initializer = parseVarDeclaration(type, name);
+    }
+    else
+    {
+        initializer = parseExpressionStatement();
+    }
 
     ExprPtr condition = nullptr;
 
-    if (match(TokenType::IDENTIFIER))
+    if (!check(TokenType::SEMICOLON))
         condition = parseExpression();
+
+    consume(TokenType::SEMICOLON, "Expected ';' after condition");
 
     ExprPtr increment = nullptr;
 
-    if (match(TokenType::IDENTIFIER))
+    if (!check(TokenType::CLOSE_PAREN))
         increment = parseExpression();
 
-    consume(TokenType::CLOSE_PAREN, "Expected ')' after for condition.");
+    consume(TokenType::CLOSE_PAREN, "Expected ')' after for condition");
 
     StmtPtr body = parseStatement();
 
@@ -421,7 +555,7 @@ StmtPtr Parser::parseReturnStatement()
         value = parseExpression();
     }
 
-    consume(TokenType::SEMICOLON, "Expected ';' after return value.");
+    consume(TokenType::SEMICOLON, "Expected ';' after return value");
 
     return std::make_unique<ReturnStmt>(std::move(keyword), std::move(value));
 }
