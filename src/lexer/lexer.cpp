@@ -2,13 +2,15 @@
 
 const std::unordered_map<std::string, TokenType> Lexer::keywords = {
     {"int", TokenType::KW_INT},    {"float", TokenType::KW_FLOAT},
-    {"string", TokenType::KW_STR}, {"return", TokenType::RETURN},
-    {";", TokenType::SEMICOLON},   {"main", TokenType::MAIN},
-    {"const", TokenType::CONST},   {"printf", TokenType::PRINTF},
-};
+    {"string", TokenType::KW_STR}, {"char", TokenType::KW_CHAR},
+    {"return", TokenType::RETURN}, {";", TokenType::SEMICOLON},
+    {"const", TokenType::CONST},   {"for", TokenType::FOR},
+    {"while", TokenType::WHILE},   {"if", TokenType::IF},
+    {"else", TokenType::ELSE}};
 
+// TODO: make token identifier for if, for, while and else
 Lexer::Lexer(const std::string& src, const std::string& filename)
-    : src(src), filename(filename), start(0), current(0), line(1), col(1) {};
+    : src(src), filename(filename), start(0), curr(0), line(1), col(1) {};
 
 std::vector<Token> Lexer::tokenize()
 {
@@ -29,7 +31,7 @@ std::vector<Token> Lexer::tokenize()
 Token Lexer::nextToken()
 {
     skipWhitespace();
-    start = current;
+    start = curr;
 
     if (isEnd())
         return makeToken(TokenType::TK_EOF);
@@ -58,35 +60,37 @@ Token Lexer::nextToken()
         case '{':
             return makeToken(TokenType::OPEN_BRACE);
         case '}':
-            return makeToken(TokenType::CLOSE_PAREN);
+            return makeToken(TokenType::CLOSE_BRACE);
         case ';':
             return makeToken(TokenType::SEMICOLON);
+        case ',':
+            return makeToken(TokenType::COMMA);
         case '=':
             if (match('='))
             {
                 advance();
-                makeToken(TokenType::EE);
+                return makeToken(TokenType::EE);
             }
             return makeToken(TokenType::ASSIGN);
         case '!':
             if (match('='))
             {
                 advance();
-                makeToken(TokenType::NE);
+                return makeToken(TokenType::NE);
             }
             return makeToken(TokenType::BANG);
         case '<':
             if (match('='))
             {
                 advance();
-                makeToken(TokenType::LEQ);
+                return makeToken(TokenType::LEQ);
             }
             return makeToken(TokenType::LESS);
         case '>':
             if (match('='))
             {
                 advance();
-                makeToken(TokenType::GEQ);
+                return makeToken(TokenType::GEQ);
             }
             return makeToken(TokenType::GREATER);
         case '+':
@@ -109,7 +113,7 @@ Token Lexer::nextToken()
 
 Token Lexer::makeToken(TokenType type)
 {
-    return Token{type, src.substr(start, current - start), line, col};
+    return Token{type, src.substr(start, curr - start), line, col};
 };
 
 Token Lexer::errToken(std::string message)
@@ -121,7 +125,7 @@ bool Lexer::match(char expected)
 {
     if (isEnd())
         return false;
-    if (src[current] == expected)
+    if (src[curr] == expected)
         return true;
 
     return false;
@@ -132,20 +136,20 @@ char Lexer::peek() const
     if (isEnd())
         return '\0';
 
-    return src[current];
+    return src[curr];
 };
 
 char Lexer::peekNext() const
 {
-    if (current + 1 >= src.size())
+    if (curr + 1 >= src.size())
         return '\0';
 
-    return src[current + 1];
+    return src[curr + 1];
 };
 
 bool Lexer::isEnd() const
 {
-    if (current >= src.size())
+    if (curr >= src.size())
         return true;
 
     return false;
@@ -153,8 +157,8 @@ bool Lexer::isEnd() const
 
 char Lexer::advance()
 {
-    // post increment, c is at current - 1
-    char c = src[current++];
+    // post increment, c is at curr - 1
+    char c = src[curr++];
 
     if (c == '\n')
     {
@@ -176,7 +180,7 @@ Token Lexer::scanIdentifierOrKeyword()
         advance();
     }
 
-    std::string text = src.substr(start, current - start);
+    std::string text = src.substr(start, curr - start);
 
     auto it = keywords.find(text);
 
@@ -220,7 +224,7 @@ Token Lexer::scanNum()
 
 void Lexer::skipWhitespace()
 {
-    // advances current to end of whitespace including comments
+    // advances curr to end of whitespace including comments
     while (!isEnd())
     {
         char c = peek();

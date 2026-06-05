@@ -14,6 +14,16 @@ enum class TokenType
     KW_INT,   // integer keyword
     KW_FLOAT, // float keyword
     KW_STR,   // string keyword
+    KW_CHAR,  // char keyword
+
+    /**
+     * Value
+     * Actual value of the type, e.g. "hello" or 5.0
+     */
+    VAL_FLOAT,
+    VAL_STRING,
+    VAL_CHAR,
+    VAL_INT,
 
     /**
      * Operators
@@ -48,17 +58,17 @@ enum class TokenType
     SEMICOLON,   // ;
     TK_EOF,      // end of file
     ERROR,       // error
-    MAIN,        // main
-    CONST,       // const
-    PRINTF,      // printf
+    // MAIN,        // main
+    CONST, // const
+    COMMA, // ,
 
     /**
-     * Value
-     * Actual value of the type, e.g. "hello" or 5.0
+     * Statements
      */
-    VAL_FLOAT,
-    VAL_STRING,
-    VAL_INT,
+    IF,    // if(...)
+    WHILE, // while(...)
+    FOR,   // for(...)
+    ELSE,  // else(...)
 };
 
 struct Token
@@ -99,7 +109,7 @@ private:
     std::string src;
     std::string filename;
     size_t start;
-    size_t current;
+    size_t curr;
     int line;
     int col;
 
