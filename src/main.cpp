@@ -1,6 +1,10 @@
 #include "lexer/lexer.h"
+#include "parser/parser.h"
+#include "utils/print_ast.h"
+#include "utils/print_type.h"
 #include "utils/utils.h"
 #include <iostream>
+#include <string>
 
 int main(int argc, char* argv[])
 {
@@ -16,9 +20,27 @@ int main(int argc, char* argv[])
 
     std::vector<Token> v = lexer.tokenize();
 
+    std::cout << "After Lexer: " << '\n';
+
+    std::cout << '\n';
+
     for (auto& it : v)
     {
-        std::cout << it.val << std::endl;
+        std::cout << it.val << ' ' << tokenTypeToString(it.type) << '\n';
+    }
+
+    std::cout << '\n';
+
+    std::cout << "After Parser: " << '\n';
+
+    Parser parser(v);
+
+    std::unique_ptr<Program> p = parser.parse();
+
+    for (auto& it : p->statements)
+    {
+        printStmt(it.get());
+        std::cout << "\n";
     }
 
     return 0;
