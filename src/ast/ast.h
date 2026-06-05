@@ -36,6 +36,17 @@ struct AstNode
     virtual ~AstNode() = default;
 };
 
+struct Param
+{
+    Token type;
+    Token name;
+
+    explicit Param(Token type, Token name)
+        : type(std::move(type)), name(std::move(name))
+    {
+    }
+};
+
 struct Program : AstNode
 {
     std::vector<StmtPtr> statements;
@@ -182,11 +193,11 @@ struct FunctionStmt : Stmt
 {
     Token returnType;
     Token name;
-    std::vector<Token> params; // TODO: make params a struct
+    std::vector<Param> params; // TODO: make params a struct
     StmtPtr body;
 
     explicit FunctionStmt(Token returnType, Token name,
-                          std::vector<Token> params, StmtPtr body)
+                          std::vector<Param> params, StmtPtr body)
         : returnType(std::move(returnType)), name(std::move(name)),
           params(std::move(params)), body(std::move(body))
     {
