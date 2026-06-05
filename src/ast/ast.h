@@ -27,19 +27,6 @@ struct PostFixExpr;
 typedef std::unique_ptr<Expr> ExprPtr;
 typedef std::unique_ptr<Stmt> StmtPtr;
 
-struct ExprVisitor
-{
-    // overriden by class which implements the visit function, e.g. print,
-    // compile
-    virtual std::string visitLiteralExpr(const LiteralExpr& expr) = 0;
-    virtual std::string visitBinaryExpr(const BinaryExpr& expr) = 0;
-    virtual std::string visitUnaryExpr(const UnaryExpr& expr) = 0;
-    virtual std::string visitIdentifierExpr(const IdentifierExpr& expr) = 0;
-    virtual std::string visitPostFixExpr(const PostFixExpr& expr) = 0;
-
-    virtual ~ExprVisitor() = default;
-};
-
 /**
  * Define destructors through base class using virtual destructor
  */
@@ -49,12 +36,16 @@ struct AstNode
     virtual ~AstNode() = default;
 };
 
+struct Program : AstNode
+{
+    std::vector<StmtPtr> statements;
+};
+
 // expression: produces values
 struct Expr : AstNode
 {
     // pure virtual functions, all concrete functions must implement
     // overridden by all expression implementations, e.g. literal expr
-    virtual std::string accept(ExprVisitor& visitor) const = 0;
     virtual ~Expr() = default;
 };
 
@@ -65,15 +56,11 @@ struct Stmt : AstNode
 };
 
 // raw value written in code, e.g. "this is a string"
-struct LiteralExpr : Expr
+struct PrimaryExpr : Expr
 {
     Token value;
-    explicit LiteralExpr(Token token) : value(std::move(token)) {}
-
-    std::string accept(ExprVisitor& visitor) const override
+    explicit PrimaryExpr(Token token) : value(std::move(token))
     {
-        // passes in the current LiteralExpr object
-        return visitor.visitLiteralExpr(*this);
     }
 };
 // explicit stops silent conversions, we have to convert it ourselves
@@ -83,14 +70,8 @@ struct LiteralExpr : Expr
 struct IdentifierExpr : Expr
 {
     Token name;
-    explicit IdentifierExpr(Token token) : name(std::move(token)) {}
-
-    std::string accept(ExprVisitor& visitor) const override
+    explicit IdentifierExpr(Token token) : name(std::move(token))
     {
-        // passes in the current object into the defined function, e.g. print
-        // print implements visitIdentifierExpr and accept returns the result
-        // of prints implementation of visitIdentifierExpr
-        return visitor.visitIdentifierExpr(*this);
     }
 };
 
@@ -104,11 +85,6 @@ struct BinaryExpr : Expr
         : op(std::move(token)), l(std::move(left)), r(std::move(right))
     {
     }
-
-    std::string accept(ExprVisitor& visitor) const override
-    {
-        return visitor.visitBinaryExpr(*this);
-    }
 };
 
 // expression with one operand and operator, e.g. --x or -(x + 4)
@@ -119,11 +95,6 @@ struct UnaryExpr : Expr
     explicit UnaryExpr(Token token, ExprPtr right)
         : op(std::move(token)), r(std::move(right))
     {
-    }
-
-    std::string accept(ExprVisitor& visitor) const override
-    {
-        return visitor.visitUnaryExpr(*this);
     }
 };
 
@@ -136,20 +107,27 @@ struct PostFixExpr : Expr
         : op(std::move(token)), l(std::move(left))
     {
     }
+};
 
-    std::string accept(ExprVisitor& visitor) const override
+// function calls
+struct CallExpr : Expr
+{
+    ExprPtr called;
+    std::vector<ExprPtr> args;
+    explicit CallExpr(ExprPtr callee, std::vector<ExprPtr> arguments)
+        : called(std::move(callee)), args(std::move(arguments))
     {
-        return visitor.visitPostFixExpr(*this);
     }
 };
 
 // variable declaration, e.g. let x = 5, name = x, value = 5
 struct VarDecStmt : Stmt
 {
+    Token type;
     Token name;
     ExprPtr value;
-    explicit VarDecStmt(Token token, ExprPtr value)
-        : name(std::move(token)), value(std::move(value))
+    explicit VarDecStmt(Token type, Token token, ExprPtr value)
+        : type(std::move(type)), name(std::move(token)), value(std::move(value))
     {
     }
 };
@@ -178,42 +156,58 @@ struct WhileStmt : Stmt
 
 struct ForStmt : Stmt
 {
-    ExprPtr start;
-    ExprPtr end;
-    ExprPtr range;
-    StmtPtr step;
-    explicit ForStmt(ExprPtr start, ExprPtr end, ExprPtr range, StmtPtr step)
-        : start(std::move(start)), end(std::move(end)), range(std::move(range)),
-          step(std::move(step))
+    StmtPtr initializer;
+    ExprPtr condition;
+    ExprPtr increment;
+    StmtPtr body;
+    explicit ForStmt(StmtPtr initializer, ExprPtr condition, ExprPtr increment,
+                     StmtPtr body)
+        : initializer(std::move(initializer)), condition(std::move(condition)),
+          increment(std::move(increment)), body(std::move(body))
     {
     }
 };
 
-// TODO: See if using dynamic cast might be better than creating new struct for
-// every return type
-class AstPrinter : public ExprVisitor
+// high level block of code within a statement
+struct BlockStmt : Stmt
 {
-public:
-    std::string print(const Expr& expr)
+    std::vector<StmtPtr> statements;
+    explicit BlockStmt(std::vector<StmtPtr> statements)
+        : statements(std::move(statements))
     {
-        // implement dynamic cast here
-        return expr.accept(*this);
     }
+};
 
-    std::string visitLiteralExpr(const LiteralExpr& expr) override
+struct FunctionStmt : Stmt
+{
+    Token returnType;
+    Token name;
+    std::vector<Token> params; // TODO: make params a struct
+    StmtPtr body;
+
+    explicit FunctionStmt(Token returnType, Token name,
+                          std::vector<Token> params, StmtPtr body)
+        : returnType(std::move(returnType)), name(std::move(name)),
+          params(std::move(params)), body(std::move(body))
     {
-        return expr.value.val;
     }
+};
 
-    std::string visitIdentifierExpr(const IdentifierExpr& expr) override
+struct ExprStmt : Stmt
+{
+    ExprPtr expr;
+    explicit ExprStmt(ExprPtr expr) : expr(std::move(expr))
     {
-        return expr.name.val;
     }
+};
 
-private:
-    std::string parenthesize(const std::string& name, const Expr& expr)
+struct ReturnStmt : Stmt
+{
+    Token keyword;
+    ExprPtr value;
+    ReturnStmt(Token keyword, ExprPtr value)
+        : keyword(std::move(keyword)), value(std::move(value))
     {
-        return '(' + name + ' ' + print(expr) + ')';
     }
 };
 
