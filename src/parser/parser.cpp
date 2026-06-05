@@ -177,8 +177,9 @@ ExprPtr Parser::parseFactor()
 // handles unary e.g. x++, !ok, -5
 ExprPtr Parser::parseUnary()
 {
-    ExprPtr expr = parsePrimary();
-    return expr;
+    return parseCall();
+    // ExprPtr expr = parsePrimary();
+    // return expr;
 };
 
 // handles primaries e.g. 5, 3.14, 67, "six_seven", either int, float or string
@@ -202,6 +203,36 @@ ExprPtr Parser::parsePrimary()
                              std::to_string(peek().line) + ", col " +
                              std::to_string(peek().col));
 };
+
+ExprPtr Parser::parseCall()
+{
+    ExprPtr expr = parsePrimary();
+
+    while (true)
+    {
+        if (match(TokenType::OPEN_PAREN))
+        {
+            std::vector<ExprPtr> arguments;
+
+            if (!check(TokenType::CLOSE_PAREN))
+            {
+                arguments.push_back(parseExpression());
+                while (match(TokenType::COMMA))
+                {
+                    arguments.push_back(parseExpression());
+                }
+            }
+
+            consume(TokenType::CLOSE_PAREN, "Expected ')' after arguments");
+            expr = std::make_unique<CallExpr>(std::move(expr),
+                                              std::move(arguments));
+        }
+        else
+            break;
+    }
+
+    return expr;
+}
 
 /**
  * Parse Statements
@@ -280,6 +311,9 @@ StmtPtr Parser::parseStatement()
     if (match(TokenType::OPEN_BRACE))
         return parseBlock();
 
+    if (match(TokenType::RETURN))
+        return parseReturnStatement();
+
     return parseExpressionStatement();
 };
 
@@ -309,6 +343,7 @@ StmtPtr Parser::parseIfStatement()
 
     if (match(TokenType::ELSE))
     {
+        // consume(TokenType::OPEN_BRACE, "Expected '{' after else");
         elseBranch = parseStatement();
     }
 
@@ -319,11 +354,11 @@ StmtPtr Parser::parseIfStatement()
 // handles while statement
 StmtPtr Parser::parseWhileStatement()
 {
-    consume(TokenType::OPEN_PAREN, "Expected '(' after 'while'.");
+    consume(TokenType::OPEN_PAREN, "Expected '(' after 'while'");
 
     ExprPtr condition = parseExpression();
 
-    consume(TokenType::CLOSE_PAREN, "Expected ')' after while condition.");
+    consume(TokenType::CLOSE_PAREN, "Expected ')' after while condition");
 
     StmtPtr body = parseStatement();
 
@@ -333,7 +368,7 @@ StmtPtr Parser::parseWhileStatement()
 // handles for statement
 StmtPtr Parser::parseForStatement()
 {
-    consume(TokenType::OPEN_PAREN, "Expected '(' after 'for'.");
+    consume(TokenType::OPEN_PAREN, "Expected '(' after 'for'");
 
     StmtPtr initializer = nullptr;
 
@@ -365,13 +400,28 @@ StmtPtr Parser::parseBlock()
 {
     std::vector<StmtPtr> statements;
 
-    while (!isEnd() && !match(TokenType::CLOSE_BRACE))
+    while (!isEnd() && !check(TokenType::CLOSE_BRACE))
     {
-        advance();
         statements.push_back(parseDeclaration());
     }
 
-    consume(TokenType::CLOSE_BRACE, "Expected '}'.");
+    consume(TokenType::CLOSE_BRACE, "Expected '}'");
 
     return std::make_unique<BlockStmt>(std::move(statements));
 };
+
+StmtPtr Parser::parseReturnStatement()
+{
+    Token keyword = prev();
+
+    ExprPtr value = nullptr;
+
+    if (!check(TokenType::SEMICOLON))
+    {
+        value = parseExpression();
+    }
+
+    consume(TokenType::SEMICOLON, "Expected ';' after return value.");
+
+    return std::make_unique<ReturnStmt>(std::move(keyword), std::move(value));
+}

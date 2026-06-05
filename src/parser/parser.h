@@ -26,18 +26,20 @@ private:
     ExprPtr parseUnary();   // -5, !Ok, ++x etc
     ExprPtr parsePrimary(); // "hello", true, 67, (), {} etc.
     ExprPtr parseTerm();    // + - etc.
+    ExprPtr parseCall();    // printf(...) etc.
 
     // parse grammar rule statements
 
     StmtPtr parseDeclaration();
-    StmtPtr parseVarDeclaration();
-    StmtPtr parseFunctionDeclaration();
+    StmtPtr parseVarDeclaration(Token type, Token name);
+    StmtPtr parseFunctionDeclaration(Token type, Token name);
     StmtPtr parseExpressionStatement();
     StmtPtr parseStatement();
     StmtPtr parseIfStatement();
     StmtPtr parseWhileStatement();
     StmtPtr parseForStatement();
     StmtPtr parseBlock();
+    StmtPtr parseReturnStatement();
 
     // helpers
 
