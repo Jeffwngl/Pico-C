@@ -159,7 +159,8 @@ void printStmt(const Stmt* stmt)
             if (i > 0)
                 std::cout << ", ";
 
-            std::cout << func->params[i].val;
+            std::cout << func->params[i].type.val << ' '
+                      << func->params[i].name.val;
         }
 
         std::cout << ") ";
