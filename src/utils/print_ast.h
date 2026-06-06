@@ -180,6 +180,39 @@ void printStmt(const Stmt* stmt)
 
         std::cout << ")";
     }
+    else if (const auto* arr = dynamic_cast<const ArrDecStmt*>(stmt))
+    {
+        std::cout << "ArrDec(";
+        std::cout << arr->type.val << " ";
+        std::cout << arr->name.val;
+        std::cout << "[";
+
+        if (arr->size)
+        {
+            printExpr(arr->size.get());
+        }
+
+        std::cout << "]";
+
+        if (!arr->value.empty())
+        {
+            std::cout << " = {";
+
+            for (size_t i = 0; i < arr->value.size(); i++)
+            {
+                if (i > 0)
+                {
+                    std::cout << ", ";
+                }
+
+                printExpr(arr->value[i].get());
+            }
+
+            std::cout << "}";
+        }
+
+        std::cout << ")";
+    }
     else
     {
         std::cout << "UnknownStmt";
