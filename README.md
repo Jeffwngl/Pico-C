@@ -60,7 +60,7 @@ expressionStatement
             → expression ";" ;
 ```
 
-### Expression grammar:
+### Expression grammar
 ```
 expression  → assignment ;
 
@@ -92,8 +92,9 @@ primary     → INT_LITERAL
 
 ## Resources Used
 
-http://scheme2006.cs.uchicago.edu/11-ghuloum.pdf
-norasandler.com/2017/11/29/Write-a-Compiler.html
-https://craftinginterpreters.com/introduction.html
-https://github.com/rui314/chibicc
-https://www.youtube.com/watch?v=ENKT0Z3gldE
+http://scheme2006.cs.uchicago.edu/11-ghuloum.pdf  
+https://norasandler.com/2017/11/29/Write-a-Compiler.html  
+https://craftinginterpreters.com/introduction.html  
+https://github.com/rui314/chibicc  
+https://www.youtube.com/watch?v=ENKT0Z3gldE  
+https://en.cppreference.com/c/language  
