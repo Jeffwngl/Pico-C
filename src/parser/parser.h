@@ -34,6 +34,7 @@ private:
 
     StmtPtr parseDeclaration();
     StmtPtr parseVarDeclaration(Token type, Token name);
+    StmtPtr parseArrDeclaration(Token type, Token name);
     StmtPtr parseFunctionDeclaration(Token type, Token name);
     StmtPtr parseExpressionStatement();
     StmtPtr parseStatement();

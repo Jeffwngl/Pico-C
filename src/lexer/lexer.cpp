@@ -1,12 +1,12 @@
 #include "lexer.h"
 
 const std::unordered_map<std::string, TokenType> Lexer::keywords = {
-    {"int", TokenType::KW_INT},    {"float", TokenType::KW_FLOAT},
-    {"string", TokenType::KW_STR}, {"char", TokenType::KW_CHAR},
-    {"return", TokenType::RETURN}, {";", TokenType::SEMICOLON},
-    {"const", TokenType::CONST},   {"for", TokenType::FOR},
-    {"while", TokenType::WHILE},   {"if", TokenType::IF},
-    {"else", TokenType::ELSE}};
+    {"int", TokenType::KW_INT},     {"float", TokenType::KW_FLOAT},
+    {"char", TokenType::KW_CHAR},   {"return", TokenType::RETURN},
+    {";", TokenType::SEMICOLON},    {"const", TokenType::CONST},
+    {"for", TokenType::FOR},        {"while", TokenType::WHILE},
+    {"if", TokenType::IF},          {"else", TokenType::ELSE},
+    {"include", TokenType::INCLUDE}};
 
 Lexer::Lexer(const std::string& src, const std::string& filename)
     : src(src), filename(filename), start(0), curr(0), line(1), col(1) {};
@@ -74,6 +74,8 @@ Token Lexer::nextToken()
             return makeToken(TokenType::SEMICOLON);
         case ',':
             return makeToken(TokenType::COMMA);
+        case '#':
+            return makeToken(TokenType::HASH);
         case '=':
             if (match('='))
             {

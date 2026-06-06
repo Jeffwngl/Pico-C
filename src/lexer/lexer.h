@@ -13,7 +13,6 @@ enum class TokenType
      */
     KW_INT,   // integer keyword
     KW_FLOAT, // float keyword
-    KW_STR,   // string keyword
     KW_CHAR,  // char keyword
 
     /**
@@ -68,14 +67,16 @@ enum class TokenType
     REF,           // &
     OR,            // ||
     BIT_OR,        // |
+    HASH,          // #
 
     /**
      * Statements
      */
-    IF,    // if(...)
-    WHILE, // while(...)
-    FOR,   // for(...)
-    ELSE,  // else(...)
+    IF,      // if(...)
+    WHILE,   // while(...)
+    FOR,     // for(...)
+    ELSE,    // else(...)
+    INCLUDE, // #include
 };
 
 struct Token

@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "../lexer/lexer.h"
 
 Parser::Parser(std::vector<Token> tokens) : tokens(tokens), curr(0)
 {
@@ -80,7 +81,7 @@ bool Parser::match(std::initializer_list<TokenType> types)
 bool Parser::isType(TokenType type) const
 {
     return type == TokenType::KW_INT || type == TokenType::KW_FLOAT ||
-           type == TokenType::KW_STR || type == TokenType::KW_CHAR;
+           type == TokenType::KW_CHAR;
 };
 
 Token Parser::consume(TokenType type, const std::string& message)
@@ -209,6 +210,7 @@ ExprPtr Parser::parseUnary()
     return parsePostfix();
 };
 
+// handles post fix operations e.g. x++
 ExprPtr Parser::parsePostfix()
 {
     ExprPtr expr = parseCall();
@@ -283,8 +285,7 @@ ExprPtr Parser::parsePrimary()
 // handles high level type declarations e.g. int, string, char
 StmtPtr Parser::parseDeclaration()
 {
-    if (match({TokenType::KW_INT, TokenType::KW_FLOAT, TokenType::KW_STR,
-               TokenType::KW_CHAR}))
+    if (match({TokenType::KW_INT, TokenType::KW_FLOAT, TokenType::KW_CHAR}))
     {
         Token type = prev();
 
@@ -296,10 +297,114 @@ StmtPtr Parser::parseDeclaration()
             return parseFunctionDeclaration(std::move(type), std::move(name));
         }
 
+        if (check(TokenType::OPEN_BRACKET))
+        {
+            return parseArrDeclaration(std::move(type), std::move(name));
+        }
+
         return parseVarDeclaration(std::move(type), std::move(name));
     }
 
     return parseStatement();
+};
+
+// handles array declarations e.g. char str[20] = {'h ', ...} or "this_string"
+StmtPtr Parser::parseArrDeclaration(Token type, Token name)
+{
+    std::vector<ExprPtr> value;
+    ExprPtr size = nullptr;
+
+    consume(TokenType::OPEN_BRACKET, "Expected '[' after array name");
+
+    if (!check(TokenType::CLOSE_BRACKET))
+    {
+        size = parseExpression();
+    }
+
+    consume(TokenType::CLOSE_BRACKET, "Expected ']' after array size");
+
+    if (match(TokenType::ASSIGN))
+    {
+        if (match(TokenType::VAL_STRING))
+        {
+            // turn string to char and append to value vec
+            Token stringToken = prev();
+
+            std::string text = stringToken.val;
+
+            if (text.size() >= 2 && text.front() == '"' && text.back() == '"')
+            {
+                text = text.substr(1, text.size() - 2);
+            }
+
+            for (auto& c : text)
+            {
+                Token token{TokenType::VAL_CHAR, std::string(1, c),
+                            stringToken.line, stringToken.col};
+                value.push_back(std::make_unique<PrimaryExpr>(token));
+            }
+
+            Token nullToken{TokenType::VAL_CHAR, "\\0", stringToken.line,
+                            stringToken.col};
+
+            value.push_back(std::make_unique<PrimaryExpr>(nullToken));
+        }
+        else if (match(TokenType::OPEN_BRACE))
+        {
+            // if not up to size, initialize rest to 0
+            if (!check(TokenType::CLOSE_BRACE))
+            {
+
+                value.push_back(parseExpression());
+
+                while (match(TokenType::COMMA))
+                {
+                    if (check(TokenType::CLOSE_BRACE))
+                        break;
+
+                    value.push_back(parseExpression());
+                }
+            }
+
+            consume(TokenType::CLOSE_BRACE,
+                    "Expected '}' after array value initialization");
+        }
+        else
+        {
+            throw std::runtime_error("Expected string literal or '{' after "
+                                     "array assignment at line " +
+                                     std::to_string(peek().line) + ", col " +
+                                     std::to_string(peek().col));
+        }
+    }
+
+    if (size)
+    {
+        const auto* primary = dynamic_cast<const PrimaryExpr*>(size.get());
+
+        if (primary && primary->value.type == TokenType::VAL_INT)
+        {
+            int declaredSize = std::stoi(primary->value.val);
+
+            if (value.size() > static_cast<size_t>(declaredSize))
+            {
+                throw std::runtime_error(
+                    "Excess elements in array initializer.");
+            }
+        }
+    }
+    else if (!value.empty())
+    {
+        Token sizeToken{TokenType::VAL_INT, std::to_string(value.size()),
+                        name.line, name.col};
+
+        size = std::make_unique<PrimaryExpr>(sizeToken);
+    }
+
+    consume(TokenType::SEMICOLON, "Expected ';' after array declaration");
+
+    return std::make_unique<ArrDecStmt>(std::move(type), std::move(name),
+                                        std::move(size), std::move(value));
 };
 
 // handles variable declarations e.g. int x = 5 + 3;
@@ -312,7 +417,7 @@ StmtPtr Parser::parseVarDeclaration(Token type, Token name)
         value = parseExpression();
     }
 
-    consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
+    consume(TokenType::SEMICOLON, "Expected ';' after variable declaration");
 
     return std::make_unique<VarDecStmt>(std::move(type), std::move(name),
                                         std::move(value));
@@ -335,9 +440,6 @@ StmtPtr Parser::parseFunctionDeclaration(Token type, Token name)
         }
     }
 
-    // TODO: add param list
-    // For now only support empty parameter list
-    // int main() {}
     consume(TokenType::CLOSE_PAREN, "Expected ')' after function parameters.");
 
     consume(TokenType::OPEN_BRACE, "Expected '{' before function body.");
