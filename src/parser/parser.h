@@ -33,7 +33,7 @@ private:
     // parse grammar rule statements
 
     StmtPtr parseDeclaration();
-    StmtPtr parseVarDeclaration(Token type, Token name);
+    StmtPtr parseVarDeclaration(Token type, Token name, int pointerDepth);
     StmtPtr parseArrDeclaration(Token type, Token name);
     StmtPtr parseFunctionDeclaration(Token type, Token name);
     StmtPtr parseExpressionStatement();

@@ -289,6 +289,13 @@ StmtPtr Parser::parseDeclaration()
     {
         Token type = prev();
 
+        int pointerDepth = 0;
+
+        while (match(TokenType::STAR))
+        {
+            pointerDepth++;
+        }
+
         Token name =
             consume(TokenType::IDENTIFIER, "Expected name after type.");
 
@@ -302,7 +309,8 @@ StmtPtr Parser::parseDeclaration()
             return parseArrDeclaration(std::move(type), std::move(name));
         }
 
-        return parseVarDeclaration(std::move(type), std::move(name));
+        return parseVarDeclaration(std::move(type), std::move(name),
+                                   std::move(pointerDepth));
     }
 
     return parseStatement();
@@ -316,6 +324,7 @@ StmtPtr Parser::parseArrDeclaration(Token type, Token name)
 
     consume(TokenType::OPEN_BRACKET, "Expected '[' after array name");
 
+    // if size is an identifier, this is determined at compile time
     if (!check(TokenType::CLOSE_BRACKET))
     {
         size = parseExpression();
@@ -351,7 +360,6 @@ StmtPtr Parser::parseArrDeclaration(Token type, Token name)
         }
         else if (match(TokenType::OPEN_BRACE))
         {
-            // if not up to size, initialize rest to 0
             if (!check(TokenType::CLOSE_BRACE))
             {
 
@@ -391,6 +399,14 @@ StmtPtr Parser::parseArrDeclaration(Token type, Token name)
                 throw std::runtime_error(
                     "Excess elements in array initializer.");
             }
+
+            // if not up to size, initialize rest to 0
+            while (value.size() < static_cast<size_t>(declaredSize))
+            {
+                Token zeroToken{TokenType::VAL_INT, "0", name.line, name.col};
+
+                value.push_back(std::make_unique<PrimaryExpr>(zeroToken));
+            }
         }
     }
     else if (!value.empty())
@@ -408,7 +424,7 @@ StmtPtr Parser::parseArrDeclaration(Token type, Token name)
 };
 
 // handles variable declarations e.g. int x = 5 + 3;
-StmtPtr Parser::parseVarDeclaration(Token type, Token name)
+StmtPtr Parser::parseVarDeclaration(Token type, Token name, int pointerDepth)
 {
     ExprPtr value = nullptr;
 
@@ -420,7 +436,8 @@ StmtPtr Parser::parseVarDeclaration(Token type, Token name)
     consume(TokenType::SEMICOLON, "Expected ';' after variable declaration");
 
     return std::make_unique<VarDecStmt>(std::move(type), std::move(name),
-                                        std::move(value));
+                                        std::move(value),
+                                        std::move(pointerDepth));
 };
 
 // handles function declarations e.g. int main() {}
@@ -553,7 +570,13 @@ StmtPtr Parser::parseForStatement()
         Token type = prev();
         Token name = consume(TokenType::IDENTIFIER,
                              "Expected variable name in for initializer");
-        initializer = parseVarDeclaration(type, name);
+        int pointerDepth = 0;
+
+        while (match(TokenType::STAR))
+        {
+            pointerDepth++;
+        }
+        initializer = parseVarDeclaration(type, name, pointerDepth);
     }
     else
     {
