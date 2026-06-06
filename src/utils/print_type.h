@@ -12,8 +12,6 @@ std::string tokenTypeToString(TokenType type)
             return "KW_INT";
         case TokenType::KW_FLOAT:
             return "KW_FLOAT";
-        case TokenType::KW_STR:
-            return "KW_STR";
         case TokenType::KW_CHAR:
             return "KW_CHAR";
 
@@ -71,6 +69,10 @@ std::string tokenTypeToString(TokenType type)
             return "OPEN_BRACE";
         case TokenType::CLOSE_BRACE:
             return "CLOSE_BRACE";
+        case TokenType::OPEN_BRACKET:
+            return "OPEN_BRACKET";
+        case TokenType::CLOSE_BRACKET:
+            return "CLOSE_BRACKET";
         case TokenType::RETURN:
             return "RETURN";
         case TokenType::VAR:
@@ -81,10 +83,14 @@ std::string tokenTypeToString(TokenType type)
             return "TK_EOF";
         case TokenType::ERROR:
             return "ERROR";
-        // case TokenType::MAIN:
-        //     return "MAIN";
         case TokenType::CONST:
             return "CONST";
+        case TokenType::AND:
+            return "AND";
+        case TokenType::REF:
+            return "REF";
+        case TokenType::OR:
+            return "OR";
 
         case TokenType::VAL_FLOAT:
             return "VAL_FLOAT";
