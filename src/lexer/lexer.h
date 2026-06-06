@@ -50,18 +50,24 @@ enum class TokenType
     /**
      * Other
      */
-    IDENTIFIER,  // variable name
-    OPEN_PAREN,  // \(
-    CLOSE_PAREN, // \)
-    OPEN_BRACE,  // {
-    CLOSE_BRACE, // }
-    RETURN,      // return
-    VAR,         // variable
-    SEMICOLON,   // ;
-    TK_EOF,      // end of file
-    ERROR,       // error
-    CONST,       // const
-    COMMA,       // ,
+    IDENTIFIER,    // variable name
+    OPEN_PAREN,    // (
+    CLOSE_PAREN,   // )
+    OPEN_BRACE,    // {
+    CLOSE_BRACE,   // }
+    OPEN_BRACKET,  // [
+    CLOSE_BRACKET, // ]
+    RETURN,        // return
+    VAR,           // variable
+    SEMICOLON,     // ;
+    TK_EOF,        // end of file
+    ERROR,         // error
+    CONST,         // const
+    COMMA,         // ,
+    AND,           // &&
+    REF,           // &
+    OR,            // ||
+    BIT_OR,        // |
 
     /**
      * Statements

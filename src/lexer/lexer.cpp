@@ -66,6 +66,10 @@ Token Lexer::nextToken()
             return makeToken(TokenType::OPEN_BRACE);
         case '}':
             return makeToken(TokenType::CLOSE_BRACE);
+        case '[':
+            return makeToken(TokenType::OPEN_BRACKET);
+        case ']':
+            return makeToken(TokenType::CLOSE_BRACKET);
         case ';':
             return makeToken(TokenType::SEMICOLON);
         case ',':
@@ -112,6 +116,20 @@ Token Lexer::nextToken()
                 return makeToken(TokenType::SLASH_EQUAL);
             }
             return makeToken(TokenType::SLASH);
+        case '&':
+            if (match('&'))
+            {
+                advance();
+                return makeToken(TokenType::AND);
+            }
+            return makeToken(TokenType::REF);
+        case '|':
+            if (match('|'))
+            {
+                advance();
+                return makeToken(TokenType::OR);
+            }
+            return makeToken(TokenType::BIT_OR);
         case '+':
             if (match('+'))
             {
