@@ -136,9 +136,25 @@ struct VarDecStmt : Stmt
 {
     Token type;
     Token name;
+    int pointerDepth;
     ExprPtr value;
-    explicit VarDecStmt(Token type, Token token, ExprPtr value)
-        : type(std::move(type)), name(std::move(token)), value(std::move(value))
+    explicit VarDecStmt(Token type, Token name, ExprPtr value, int pointerDepth)
+        : type(std::move(type)), name(std::move(name)), value(std::move(value)), pointerDepth(std::move(pointerDepth))
+    {
+    }
+};
+
+// array declaration, e.g. char str[20]
+struct ArrDecStmt : Stmt
+{
+    Token type;
+    Token name;
+    ExprPtr size;
+    std::vector<ExprPtr> value;
+    explicit ArrDecStmt(Token type, Token name, ExprPtr size,
+                        std::vector<ExprPtr> value)
+        : type(std::move(type)), name(std::move(name)), size(std::move(size)),
+          value(std::move(value))
     {
     }
 };
