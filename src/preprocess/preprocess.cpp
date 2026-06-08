@@ -234,9 +234,9 @@ void PreProcessor::handleDefine(const std::string& line, std::size_t curr)
     return;
 }
 
-std::string PreProcessor::handleInclude(
-    const std::string& line, std::size_t curr,
-    const std::filesystem::path& currentFile)
+std::string PreProcessor::handleInclude(const std::string& line,
+                                        std::size_t curr,
+                                        const std::filesystem::path& currentDir)
 {
     // manually parsing this is easier
     while (curr < line.size() &&
@@ -279,11 +279,54 @@ std::string PreProcessor::handleInclude(
         throw std::runtime_error("unterminated include path");
 
     std::string includeName = line.substr(start, curr - start);
-    // filepath to quoted or angled file name
-    // find real file path and open and preprocess that file then return
-    // contents so they can replace the #include line
 
-    return includeName; // placeholder for now
+    std::filesystem::path includePath;
+
+    if (quoted)
+    {
+        // #include "file"
+        // look relative to the current file's directory.
+        includePath = currentDir / includeName;
+    }
+    else
+    {
+        // #include <file>
+        // TODO: can add system include directories.
+        includePath = currentDir / includeName;
+    }
+
+    includePath = std::filesystem::absolute(includePath).lexically_normal();
+
+    std::string includeKey = includePath.string();
+
+    if (includes.find(includeKey) != includes.end())
+    {
+        return "";
+    }
+
+    includes.insert(includeKey);
+
+    std::ifstream file(includePath);
+
+    if (!file)
+    {
+        throw std::runtime_error("could not open include file: " +
+                                 includePath.string());
+    }
+
+    std::string src;
+    char c;
+
+    while (file.get(c))
+    {
+        src += c;
+    }
+
+    std::filesystem::path includedDir = includePath.parent_path();
+
+    return processSource(src, includedDir);
+
+    // return includeName; // placeholder for now
 }
 
 bool PreProcessor::isActive() const
