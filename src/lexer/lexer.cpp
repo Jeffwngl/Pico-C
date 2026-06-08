@@ -124,7 +124,7 @@ Token Lexer::nextToken()
                 advance();
                 return makeToken(TokenType::AND);
             }
-            return makeToken(TokenType::REF);
+            return makeToken(TokenType::AMPERSAND);
         case '|':
             if (match('|'))
             {

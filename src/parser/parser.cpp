@@ -199,7 +199,7 @@ ExprPtr Parser::parseFactor()
 ExprPtr Parser::parseUnary()
 {
     if (match({TokenType::BANG, TokenType::MINUS, TokenType::PLUS_PLUS,
-               TokenType::MINUS_MINUS}))
+               TokenType::MINUS_MINUS, TokenType::AMPERSAND, TokenType::STAR}))
     {
         Token op = prev();
         ExprPtr right = parseUnary();

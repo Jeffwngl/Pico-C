@@ -64,7 +64,7 @@ enum class TokenType
     CONST,         // const
     COMMA,         // ,
     AND,           // &&
-    REF,           // &
+    AMPERSAND,     // &
     OR,            // ||
     BIT_OR,        // |
     HASH,          // #
