@@ -87,8 +87,8 @@ std::string tokenTypeToString(TokenType type)
             return "CONST";
         case TokenType::AND:
             return "AND";
-        case TokenType::REF:
-            return "REF";
+        case TokenType::AMPERSAND:
+            return "AMPERSAND";
         case TokenType::OR:
             return "OR";
 
