@@ -1,5 +1,54 @@
 # Pico-C
-A tiny C compiler written in C++ 17
+A tiny C compiler written in C++ 17.
+
+## Description
+
+While the plan was for this project to be a tiny subset of the C compiler (*Pico* C), I have continuously added new features such that the end project may be closer to the actual compiler than a small subset, this will still fall under the toy compiler category implementing some but not all of the original C11 compiler but the aim for this project is to be able to compile simple to medium large projects, e.g. git.
+
+Order of processing:
+
+- Preprocessor
+- Lexer
+- Parser
+- AST
+- Semantic analysis
+- Code Generation
+
+### Preprocessor
+
+Takes in raw file as str, then handles all preprocessing elements, e.g. replacing includes with code, macro definitions, changing file contents based on `ifndef` etc.
+
+Not implemented:
+- pragma
+- block comment ignore /** and /*
+- #undef
+
+### Lexer
+
+Not implemented:
+- double
+- uints e.g. uint_64
+- signed
+- unsigned
+- long
+- short
+- struct
+- enum
+- <<, >>, <<= and >>=
+- break
+- continue
+- &=, ^=, |=, % and %=
+- ~
+- sizeof
+- 2d arrays
+
+### Parser
+
+To write about.
+
+### Codegen
+
+To implement.
 
 ## Grammar Notation
 
@@ -13,7 +62,6 @@ declaration → type IDENTIFIER functionDeclaration
 
 type        → "int"
             | "float"
-            | "string"
             | "char" ;
 
 functionDeclaration
