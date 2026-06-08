@@ -1,5 +1,17 @@
 // This is a comment.
 
+#include "return_2.h"
+
+#define DEBUG
+
+#ifdef DEBUG
+c = 2;
+#endif
+
+#ifndef DEBUG
+c = 3;
+#endif
+
 int add(int a, int b){
     return a + b;
 }
