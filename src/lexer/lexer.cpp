@@ -299,16 +299,6 @@ void Lexer::skipWhitespace()
             continue;
         }
 
-        // line comment
-        if (c == '/' && peekNext() == '/')
-        {
-            while (!isEnd() && peek() != '\n')
-            {
-                advance();
-            }
-            continue;
-        }
-
         break;
     }
 };
