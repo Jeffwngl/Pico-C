@@ -21,7 +21,7 @@ struct Macro
 struct ConditionalFrame
 {
     bool parentActive;
-    bool condition;
+    bool used;
     bool currActive;
     bool seenElse;
 };
@@ -52,9 +52,8 @@ private:
     void handleEndif();
 
     // helpers
-    std::string PreProcessor::trim(const std::string& str);
-    std::string PreProcessor::readWord(const std::string& line,
-                                       std::size_t& pos);
+    // std::string trim(const std::string& str);
+    std::string readWord(const std::string& line, std::size_t& pos);
 };
 
 #endif

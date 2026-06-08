@@ -5,7 +5,7 @@
 std::string PreProcessor::processSource(const std::string& src,
                                         const std::filesystem::path& currentDir)
 {
-    // TODO: get rid of trimmed for easier debuggin
+    // TODO: get rid of trimmed for easier debugging
     std::string cleaned = removeComments(src);
     std::string output;
 
@@ -14,35 +14,45 @@ std::string PreProcessor::processSource(const std::string& src,
 
     while (std::getline(f, line))
     {
-        std::string trimmed = trim(line);
+        std::size_t curr = 0;
 
-        if (!trimmed.empty() && trimmed[0] == '#')
+        while (curr < line.size() &&
+               std::isspace(static_cast<unsigned char>(line[curr])))
         {
-            size_t curr = 1; // skip #
+            curr++;
+        }
 
-            std::string directive = readWord(trimmed, curr);
+        if (curr < line.size() && line[curr] == '#')
+        {
+            curr++; // skip #
+
+            std::string directive = readWord(line, curr);
 
             if (directive == "ifdef")
             {
-                handleIfdef(trimmed, curr);
+                handleIfdef(line, curr);
+                output += '\n';
                 continue;
             }
 
             if (directive == "ifndef")
             {
-                handleIfndef(trimmed, curr);
+                handleIfndef(line, curr);
+                output += '\n';
                 continue;
             }
 
             if (directive == "else")
             {
                 handleElse();
+                output += '\n';
                 continue;
             }
 
             if (directive == "endif")
             {
                 handleEndif();
+                output += '\n';
                 continue;
             }
 
@@ -54,14 +64,14 @@ std::string PreProcessor::processSource(const std::string& src,
 
             if (directive == "define")
             {
-                handleDefine(trimmed, curr);
+                handleDefine(line, curr);
+                output += '\n';
                 continue;
             }
 
             if (directive == "include")
             {
-                std::string includeName =
-                    handleInclude(trimmed, curr, currentDir);
+                std::string includeName = handleInclude(line, curr, currentDir);
 
                 // replace this with reading/preprocessing the file
                 output += includeName;
@@ -70,12 +80,14 @@ std::string PreProcessor::processSource(const std::string& src,
                 continue;
             }
 
-            throw std::runtime_error("unknown preprocessor directive: #" +
-                                     directive);
+            throw std::runtime_error(
+                std::string("unknown preprocessor directive: #") +
+                directive); // dunno why vscode linter gives error here w/o
+                            // std::string
         }
         if (isActive())
         {
-            output += replaceMacros(trimmed);
+            output += replaceMacros(line);
             output += '\n';
         }
     }
@@ -204,12 +216,6 @@ std::string PreProcessor::replaceMacros(const std::string& line)
 // TODO: make it work for other cases
 void PreProcessor::handleDefine(const std::string& line, std::size_t curr)
 {
-    // while (curr < line.size() &&
-    //        std::isspace(static_cast<unsigned char>(line[curr])))
-    // {
-    //     curr++;
-    // }
-
     std::string name = readWord(line, curr);
 
     if (name.empty())
@@ -224,8 +230,6 @@ void PreProcessor::handleDefine(const std::string& line, std::size_t curr)
     std::string value = line.substr(curr);
 
     macros[name] = Macro{value};
-
-    // TODO: call the above function replace macros
 
     return;
 }
@@ -341,28 +345,6 @@ void PreProcessor::handleEndif()
 /**
  * Helpers
  */
-
-// trims white space at start and end of strings
-std::string PreProcessor::trim(const std::string& str)
-{
-    std::size_t start = 0;
-
-    while (start < str.size() &&
-           std::isspace(static_cast<unsigned char>(str[start])))
-    {
-        start++;
-    }
-
-    std::size_t end = str.size();
-
-    while (end > start &&
-           std::isspace(static_cast<unsigned char>(str[end - 1])))
-    {
-        end--;
-    }
-
-    return str.substr(start, end - start);
-}
 
 std::string PreProcessor::readWord(const std::string& line, std::size_t& pos)
 {
