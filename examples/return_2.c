@@ -16,6 +16,13 @@ int add(int a, int b){
     return a + b;
 }
 
+int x;
+unsigned int y;
+signed char c;
+double d;
+struct Node *next;
+enum Color color;
+
 int main() {
     int f0 = 1;
     int f1 = 1;
