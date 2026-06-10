@@ -1,12 +1,17 @@
 #include "lexer.h"
 
 const std::unordered_map<std::string, TokenType> Lexer::keywords = {
-    {"int", TokenType::KW_INT},     {"float", TokenType::KW_FLOAT},
-    {"char", TokenType::KW_CHAR},   {"return", TokenType::RETURN},
-    {";", TokenType::SEMICOLON},    {"const", TokenType::CONST},
-    {"for", TokenType::FOR},        {"while", TokenType::WHILE},
-    {"if", TokenType::IF},          {"else", TokenType::ELSE},
-    {"include", TokenType::INCLUDE}};
+    {"int", TokenType::KW_INT},        {"float", TokenType::KW_FLOAT},
+    {"char", TokenType::KW_CHAR},      {"double", TokenType::KW_DOUBLE},
+    {"return", TokenType::RETURN},     {";", TokenType::SEMICOLON},
+    {"const", TokenType::CONST},       {"for", TokenType::FOR},
+    {"while", TokenType::WHILE},       {"if", TokenType::IF},
+    {"else", TokenType::ELSE},         {"include", TokenType::INCLUDE},
+    {"continue", TokenType::CONTINUE}, {"break", TokenType::BREAK},
+    {"signed", TokenType::SIGNED},     {"unsigned", TokenType::UNSIGNED},
+    {"struct", TokenType::STRUCT},     {"enum", TokenType::ENUM},
+    {"long", TokenType::LONG},         {"short", TokenType::SHORT},
+};
 
 Lexer::Lexer(const std::string& src, const std::string& filename)
     : src(src), filename(filename), start(0), curr(0), line(1), col(1) {};

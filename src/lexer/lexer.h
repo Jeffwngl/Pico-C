@@ -11,9 +11,10 @@ enum class TokenType
      * Keywords
      * Keyword type e.g. string or float
      */
-    KW_INT,   // integer keyword
-    KW_FLOAT, // float keyword
-    KW_CHAR,  // char keyword
+    KW_INT,    // integer keyword
+    KW_FLOAT,  // float keyword
+    KW_CHAR,   // char keyword
+    KW_DOUBLE, // double keyword
 
     /**
      * Value
@@ -56,7 +57,6 @@ enum class TokenType
     CLOSE_BRACE,   // }
     OPEN_BRACKET,  // [
     CLOSE_BRACKET, // ]
-    RETURN,        // return
     VAR,           // variable
     SEMICOLON,     // ;
     TK_EOF,        // end of file
@@ -72,11 +72,21 @@ enum class TokenType
     /**
      * Statements
      */
-    IF,      // if(...)
-    WHILE,   // while(...)
-    FOR,     // for(...)
-    ELSE,    // else(...)
-    INCLUDE, // #include
+    IF,       // if(...)
+    WHILE,    // while(...)
+    FOR,      // for(...)
+    ELSE,     // else(...)
+    INCLUDE,  // #include
+    BREAK,    // break
+    CONTINUE, // continue
+    RETURN,   // return
+    SIGNED,   // signed
+    UNSIGNED, // unsigned
+
+    STRUCT, // struct
+    ENUM,   // enum
+    LONG,   // long
+    SHORT,  // short
 };
 
 struct Token
