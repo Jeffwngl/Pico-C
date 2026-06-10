@@ -3,8 +3,58 @@
 #include "../parser/parser.h"
 #include <iostream>
 
+void printType(const Type& type);
 void printExpr(const Expr* expr);
 void printStmt(const Stmt* stmt);
+
+void printType(const Type& type)
+{
+    if (type.isUnsigned)
+    {
+        std::cout << "unsigned ";
+    }
+
+    if (type.isSigned)
+    {
+        std::cout << "signed ";
+    }
+
+    switch (type.base)
+    {
+        case BaseType::INT:
+            std::cout << "int";
+            break;
+
+        case BaseType::CHAR:
+            std::cout << "char";
+            break;
+
+        case BaseType::FLOAT:
+            std::cout << "float";
+            break;
+
+        case BaseType::DOUBLE:
+            std::cout << "double";
+            break;
+
+        case BaseType::STRUCT:
+            std::cout << "struct " << type.tag;
+            break;
+
+        case BaseType::ENUM:
+            std::cout << "enum " << type.tag;
+            break;
+
+        default:
+            std::cout << "unknown";
+            break;
+    }
+
+    for (int i = 0; i < type.pointerDepth; i++)
+    {
+        std::cout << "*";
+    }
+}
 
 void printExpr(const Expr* expr)
 {
@@ -53,7 +103,9 @@ void printExpr(const Expr* expr)
         for (size_t i = 0; i < call->args.size(); i++)
         {
             if (i > 0)
+            {
                 std::cout << ", ";
+            }
 
             printExpr(call->args[i].get());
         }
@@ -76,7 +128,9 @@ void printStmt(const Stmt* stmt)
 
     if (const auto* var = dynamic_cast<const VarDecStmt*>(stmt))
     {
-        std::cout << "VarDec(" << var->name.val;
+        std::cout << "VarDec(";
+        printType(var->type);
+        std::cout << " " << var->name.val;
 
         if (var->value)
         {
@@ -150,17 +204,20 @@ void printStmt(const Stmt* stmt)
     else if (const auto* func = dynamic_cast<const FunctionStmt*>(stmt))
     {
         std::cout << "Function(";
-        std::cout << func->returnType.val << " ";
-        std::cout << func->name.val;
+
+        printType(func->returnType);
+        std::cout << " " << func->name.val;
         std::cout << "(";
 
         for (size_t i = 0; i < func->params.size(); i++)
         {
             if (i > 0)
+            {
                 std::cout << ", ";
+            }
 
-            std::cout << func->params[i].type.val << ' '
-                      << func->params[i].name.val;
+            printType(func->params[i].type);
+            std::cout << " " << func->params[i].name.val;
         }
 
         std::cout << ") ";
@@ -183,8 +240,9 @@ void printStmt(const Stmt* stmt)
     else if (const auto* arr = dynamic_cast<const ArrDecStmt*>(stmt))
     {
         std::cout << "ArrDec(";
-        std::cout << arr->type.val << " ";
-        std::cout << arr->name.val;
+
+        printType(arr->type);
+        std::cout << " " << arr->name.val;
         std::cout << "[";
 
         if (arr->size)

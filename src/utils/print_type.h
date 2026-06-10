@@ -91,6 +91,14 @@ std::string tokenTypeToString(TokenType type)
             return "AMPERSAND";
         case TokenType::OR:
             return "OR";
+        case TokenType::CONTINUE:
+            return "CONTINUE";
+        case TokenType::BREAK:
+            return "BREAK";
+        case TokenType::SIGNED:
+            return "SIGNED";
+        case TokenType::UNSIGNED:
+            return "UNSIGNED";
 
         case TokenType::VAL_FLOAT:
             return "VAL_FLOAT";
