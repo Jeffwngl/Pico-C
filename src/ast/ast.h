@@ -7,8 +7,6 @@
 
 #include "../lexer/lexer.h"
 
-// TODO: Move this to a generator to generate ast.h, metaprogram the trees
-
 /**
  * AST nodes here only store the data of the node, no operations, operations
  * are defined separately as functions which take in a node to avoid the
@@ -36,20 +34,43 @@ struct AstNode
     virtual ~AstNode() = default;
 };
 
-struct Param
-{
-    Token type;
-    Token name;
-
-    explicit Param(Token type, Token name)
-        : type(std::move(type)), name(std::move(name))
-    {
-    }
-};
-
 struct Program : AstNode
 {
     std::vector<StmtPtr> statements;
+};
+
+// abstraction layer from tokens to ast
+enum class BaseType
+{
+    CHAR,
+    INT,
+    FLOAT,
+    DOUBLE,
+    STRUCT,
+    ENUM,
+};
+
+struct Type
+{
+    BaseType base;
+    bool isUnsigned = false;
+    bool isSigned = false;
+    bool isConst = false;
+    int pointerDepth = 0;
+    int longCount = 0;
+
+    std::string tag;
+};
+
+struct Param
+{
+    Type type;
+    Token name;
+
+    explicit Param(Type type, Token name)
+        : type(std::move(type)), name(std::move(name))
+    {
+    }
 };
 
 // expression: produces values
@@ -131,15 +152,15 @@ struct CallExpr : Expr
     }
 };
 
-// variable declaration, e.g. let x = 5, name = x, value = 5
+// variable declaration, e.g. int x = 5, name = x, value = 5
 struct VarDecStmt : Stmt
 {
-    Token type;
+    // Token type;
+    Type type;
     Token name;
-    int pointerDepth;
     ExprPtr value;
-    explicit VarDecStmt(Token type, Token name, ExprPtr value, int pointerDepth)
-        : type(std::move(type)), name(std::move(name)), value(std::move(value)), pointerDepth(std::move(pointerDepth))
+    explicit VarDecStmt(Type type, Token name, ExprPtr value)
+        : type(std::move(type)), name(std::move(name)), value(std::move(value))
     {
     }
 };
@@ -147,11 +168,11 @@ struct VarDecStmt : Stmt
 // array declaration, e.g. char str[20]
 struct ArrDecStmt : Stmt
 {
-    Token type;
+    Type type;
     Token name;
     ExprPtr size;
     std::vector<ExprPtr> value;
-    explicit ArrDecStmt(Token type, Token name, ExprPtr size,
+    explicit ArrDecStmt(Type type, Token name, ExprPtr size,
                         std::vector<ExprPtr> value)
         : type(std::move(type)), name(std::move(name)), size(std::move(size)),
           value(std::move(value))
@@ -207,12 +228,12 @@ struct BlockStmt : Stmt
 
 struct FunctionStmt : Stmt
 {
-    Token returnType;
+    Type returnType;
     Token name;
     std::vector<Param> params; // TODO: make params a struct
     StmtPtr body;
 
-    explicit FunctionStmt(Token returnType, Token name,
+    explicit FunctionStmt(Type returnType, Token name,
                           std::vector<Param> params, StmtPtr body)
         : returnType(std::move(returnType)), name(std::move(name)),
           params(std::move(params)), body(std::move(body))
