@@ -1,6 +1,13 @@
 #include "parser.h"
 #include "../lexer/lexer.h"
 
+const std::unordered_map<TokenType, BaseType> Parser::baseTypeMap = {
+    {TokenType::KW_INT, BaseType::INT},
+    {TokenType::KW_CHAR, BaseType::CHAR},
+    {TokenType::KW_FLOAT, BaseType::FLOAT},
+    {TokenType::KW_DOUBLE, BaseType::DOUBLE},
+};
+
 Parser::Parser(std::vector<Token> tokens) : tokens(tokens), curr(0)
 {
 }
@@ -285,16 +292,9 @@ ExprPtr Parser::parsePrimary()
 // handles high level type declarations e.g. int, string, char
 StmtPtr Parser::parseDeclaration()
 {
-    if (match({TokenType::KW_INT, TokenType::KW_FLOAT, TokenType::KW_CHAR}))
+    if (isTypeStart(peek().type))
     {
-        Token type = prev();
-
-        int pointerDepth = 0;
-
-        while (match(TokenType::STAR))
-        {
-            pointerDepth++;
-        }
+        Type type = parseType();
 
         Token name =
             consume(TokenType::IDENTIFIER, "Expected name after type.");
@@ -309,15 +309,140 @@ StmtPtr Parser::parseDeclaration()
             return parseArrDeclaration(std::move(type), std::move(name));
         }
 
-        return parseVarDeclaration(std::move(type), std::move(name),
-                                   std::move(pointerDepth));
+        return parseVarDeclaration(std::move(type), std::move(name));
     }
 
     return parseStatement();
 };
 
+// parses the type before a var declaration
+Type Parser::parseType()
+{
+    Type type;
+
+    bool seenModifier = false;
+    bool seenBase = false;
+
+    while (peek().type == TokenType::SIGNED ||
+           peek().type == TokenType::UNSIGNED ||
+           peek().type == TokenType::LONG || peek().type == TokenType::SHORT)
+    {
+        Token modifier = advance();
+
+        if (modifier.type == TokenType::SIGNED)
+        {
+            if (type.isSigned)
+                throw std::runtime_error("Duplicate signed modifier");
+
+            type.isSigned = true;
+        }
+        else if (modifier.type == TokenType::UNSIGNED)
+        {
+            if (type.isUnsigned)
+                throw std::runtime_error("Duplicate unsigned modifier");
+
+            type.isUnsigned = true;
+        }
+        else if (modifier.type == TokenType::LONG)
+        {
+            type.longCount++;
+
+            if (type.longCount > 2)
+                throw std::runtime_error("Too many long modifiers");
+        }
+        else if (modifier.type == TokenType::SHORT)
+        {
+            if (type.longCount != 0)
+                throw std::runtime_error("Cannot combine short and long");
+
+            type.longCount = -1;
+        }
+
+        seenModifier = true;
+    }
+
+    if (match(TokenType::STRUCT))
+    {
+        type.base = BaseType::STRUCT;
+
+        Token tag = consume(TokenType::IDENTIFIER,
+                            "Expected struct name after 'struct'");
+
+        type.tag = tag.val;
+        seenBase = true;
+    }
+    else if (match(TokenType::ENUM))
+    {
+        type.base = BaseType::ENUM;
+
+        Token tag =
+            consume(TokenType::IDENTIFIER, "Expected enum name after 'enum'");
+
+        type.tag = tag.val;
+        seenBase = true;
+    }
+    else if (baseTypeMap.find(peek().type) != baseTypeMap.end())
+    {
+        Token baseToken = advance();
+        type.base = toBaseType(baseToken.type);
+        seenBase = true;
+    }
+
+    if (!seenBase)
+    {
+        if (seenModifier)
+        {
+            type.base = BaseType::INT;
+        }
+        else
+        {
+            throw std::runtime_error("Expected type");
+        }
+    }
+
+    if (type.isSigned && type.isUnsigned)
+    {
+        throw std::runtime_error("Type cannot be both signed and unsigned");
+    }
+
+    if ((type.isSigned || type.isUnsigned) &&
+        (type.base == BaseType::FLOAT || type.base == BaseType::DOUBLE))
+    {
+        throw std::runtime_error(
+            "Floating-point type cannot be signed or unsigned");
+    }
+
+    while (match(TokenType::STAR))
+    {
+        type.pointerDepth++;
+    }
+
+    return type;
+}
+
+// parsing type helper TODO: find replacement for this
+BaseType Parser::toBaseType(TokenType t)
+{
+    auto it = baseTypeMap.find(t);
+
+    if (it == baseTypeMap.end())
+    {
+        throw std::runtime_error("Invalid base type");
+    }
+
+    return it->second;
+}
+
+bool Parser::isTypeStart(TokenType type) const
+{
+    return type == TokenType::SIGNED || type == TokenType::UNSIGNED ||
+           type == TokenType::LONG || type == TokenType::SHORT ||
+           type == TokenType::STRUCT || type == TokenType::ENUM ||
+           baseTypeMap.find(type) != baseTypeMap.end();
+}
+
 // handles array declarations e.g. char str[20] = {'h ', ...} or "this_string"
-StmtPtr Parser::parseArrDeclaration(Token type, Token name)
+StmtPtr Parser::parseArrDeclaration(Type type, Token name)
 {
     std::vector<ExprPtr> value;
     ExprPtr size = nullptr;
@@ -424,7 +549,7 @@ StmtPtr Parser::parseArrDeclaration(Token type, Token name)
 };
 
 // handles variable declarations e.g. int x = 5 + 3;
-StmtPtr Parser::parseVarDeclaration(Token type, Token name, int pointerDepth)
+StmtPtr Parser::parseVarDeclaration(Type type, Token name)
 {
     ExprPtr value = nullptr;
 
@@ -436,12 +561,11 @@ StmtPtr Parser::parseVarDeclaration(Token type, Token name, int pointerDepth)
     consume(TokenType::SEMICOLON, "Expected ';' after variable declaration");
 
     return std::make_unique<VarDecStmt>(std::move(type), std::move(name),
-                                        std::move(value),
-                                        std::move(pointerDepth));
+                                        std::move(value));
 };
 
 // handles function declarations e.g. int main() {}
-StmtPtr Parser::parseFunctionDeclaration(Token type, Token name)
+StmtPtr Parser::parseFunctionDeclaration(Type type, Token name)
 {
     consume(TokenType::OPEN_PAREN, "Expected '(' after function name.");
 
@@ -470,14 +594,15 @@ StmtPtr Parser::parseFunctionDeclaration(Token type, Token name)
 // handles function parameters e.g. int a, int b
 Param Parser::parseParam()
 {
-    if (!isType(peek().type))
+    if (!isTypeStart(peek().type))
     {
         throw std::runtime_error("Expected parameter type at line " +
                                  std::to_string(peek().line) + ", col " +
                                  std::to_string(peek().col));
     }
 
-    Token type = advance();
+    // Token type = advance();
+    Type type = parseType();
 
     Token name = consume(TokenType::IDENTIFIER, "Expected parameter name.");
 
@@ -563,20 +688,14 @@ StmtPtr Parser::parseForStatement()
     {
         initializer = nullptr;
     }
-    else if (match(
-                 {TokenType::KW_CHAR, TokenType::KW_INT, TokenType::KW_FLOAT}))
+    else if (isTypeStart(peek().type))
     {
 
-        Token type = prev();
+        Type type = parseType();
         Token name = consume(TokenType::IDENTIFIER,
                              "Expected variable name in for initializer");
-        int pointerDepth = 0;
 
-        while (match(TokenType::STAR))
-        {
-            pointerDepth++;
-        }
-        initializer = parseVarDeclaration(type, name, pointerDepth);
+        initializer = parseVarDeclaration(std::move(type), std::move(name));
     }
     else
     {

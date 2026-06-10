@@ -33,9 +33,9 @@ private:
     // parse grammar rule statements
 
     StmtPtr parseDeclaration();
-    StmtPtr parseVarDeclaration(Token type, Token name, int pointerDepth);
-    StmtPtr parseArrDeclaration(Token type, Token name);
-    StmtPtr parseFunctionDeclaration(Token type, Token name);
+    StmtPtr parseVarDeclaration(Type type, Token name);
+    StmtPtr parseArrDeclaration(Type type, Token name);
+    StmtPtr parseFunctionDeclaration(Type type, Token name);
     StmtPtr parseExpressionStatement();
     StmtPtr parseStatement();
     StmtPtr parseIfStatement();
@@ -58,6 +58,11 @@ private:
     Token consume(TokenType type, const std::string& message);
 
     Param parseParam();
+    Type parseType();                       // parse type extra
+    BaseType toBaseType(TokenType type);    // parse type helper
+    bool isTypeStart(TokenType type) const; // parse type helper
+
+    static const std::unordered_map<TokenType, BaseType> baseTypeMap;
 };
 
 #endif
